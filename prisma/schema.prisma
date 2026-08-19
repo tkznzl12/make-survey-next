@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SurveyStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum QuestionType {
+  TEXT
+  LONG_TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  DROPDOWN
+  RATING
+  SCALE
+}
+
+enum RuleLogic {
+  AND
+  OR
+}
+
+enum ConditionOperator {
+  IS
+  IS_NOT
+  CONTAINS
+  NOT_CONTAINS
+  GREATER_THAN
+  LESS_THAN
+}
+
+enum RuleActionType {
+  SHOW
+  HIDE
+  REQUIRE
+  SKIP
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  surveys Survey[] @relation("SurveyCreator")
+}
+
+model Survey {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  status      SurveyStatus @default(DRAFT)
+  slug        String       @unique
+
+  createdById String
+  createdBy   User   @relation("SurveyCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  oneResponsePerRespondent Boolean @default(true)
+  allowEditResponse        Boolean @default(false)
+  maxResponses             Int?
+
+  isTemplate   Boolean @default(false)
+  clonedFromId String?
+  clonedFrom   Survey?  @relation("SurveyClone", fields: [clonedFromId], references: [id], onDelete: SetNull)
+  clones       Survey[] @relation("SurveyClone")
+
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  questions Question[]
+  rules     Rule[]
+  responses Response[]
+
+  @@index([createdById])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  surveyId    String
+  survey      Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  type        QuestionType
+  required    Boolean      @default(false)
+  order       Int
+  settings    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  options        Option[]
+  answers        Answer[]
+  ruleConditions RuleCondition[]
+  ruleActions    RuleAction[]
+
+  @@unique([surveyId, order])
+  @@index([surveyId])
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  label String
+  value String
+  order Int
+
+  @@unique([questionId, order])
+  @@unique([questionId, value])
+  @@index([questionId])
+}
+
+model Rule {
+  id       String @id @default(cuid())
+  surveyId String
+  survey   Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  logic RuleLogic @default(AND)
+  order Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conditions RuleCondition[]
+  actions    RuleAction[]
+
+  @@index([surveyId, order])
+}
+
+model RuleCondition {
+  id String @id @default(cuid())
+
+  ruleId String
+  rule   Rule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  operator ConditionOperator
+  value    Json
+}
+
+model RuleAction {
+  id String @id @default(cuid())
+
+  ruleId String
+  rule   Rule   @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  type RuleActionType
+}
+
+model Response {
+  id       String @id @default(cuid())
+  surveyId String
+  survey   Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  respondentKey String
+
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answers Answer[]
+
+  @@index([surveyId, respondentKey])
+  @@index([surveyId, submittedAt])
+}
+
+model Answer {
+  id String @id @default(cuid())
+
+  responseId String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  value Json
+
+  @@unique([responseId, questionId])
+  @@index([questionId])
+}

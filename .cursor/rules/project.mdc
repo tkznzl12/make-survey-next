@@ -1,0 +1,379 @@
+# Project Development Rules
+
+## 1. Project Overview
+
+이 프로젝트는 설문을 직접 제작하고, 응답을 수집하며,
+응답 결과를 분석할 수 있는 Survey Builder & Analytics 서비스다.
+
+주요 기능:
+- 설문 생성 및 수정
+- 동적 문항 생성
+- 다양한 문항 타입 지원
+- 선택지 관리
+- 조건부 문항
+- 설문 미리보기
+- 설문 발행 및 공유
+- 응답 수집
+- 응답 결과 분석 및 시각화
+
+실제 첫 번째 사용 사례는 자치회비 사용처 조사다.
+
+---
+
+## 2. Tech Stack
+
+반드시 다음 기술을 사용한다.
+
+- Next.js
+- TypeScript
+- App Router
+- Tailwind CSS
+- shadcn/ui
+- Prisma
+- PostgreSQL
+- React Hook Form
+- Zod
+- Recharts
+- dnd-kit
+- Lucide React
+
+불필요한 라이브러리를 추가하지 않는다.
+
+새로운 라이브러리가 필요하다고 판단될 경우,
+먼저 기존 라이브러리로 해결할 수 있는지 확인한다.
+
+---
+
+## 3. Architecture
+
+Next.js App Router 구조를 따른다.
+
+Server Component를 기본으로 사용한다.
+
+다음과 같이 Client Component가 필요한 경우에만
+`"use client"`를 사용한다.
+
+- 사용자 interaction
+- React Hook Form
+- Drag & Drop
+- 브라우저 API
+- 실시간 UI 상태
+- 차트 interaction
+
+Server Component를 Client Component로 불필요하게 변경하지 않는다.
+
+---
+
+## 4. Folder Structure
+
+기본적으로 다음 구조를 따른다.
+
+app/
+├── (dashboard)/
+├── survey/
+├── api/
+└── ...
+
+components/
+├── ui/
+├── survey/
+├── builder/
+├── response/
+└── analytics/
+
+lib/
+├── db/
+├── validations/
+├── utils/
+└── survey/
+
+types/
+
+prisma/
+└── schema.prisma
+
+컴포넌트의 책임을 명확하게 분리한다.
+
+하나의 컴포넌트가 지나치게 많은 책임을 가지지 않도록 한다.
+
+---
+
+## 5. TypeScript
+
+TypeScript를 strict mode로 사용한다.
+
+`any` 사용을 금지한다.
+
+API response와 form data는 명확한 Type을 정의한다.
+
+가능하면 타입을 재사용하고 중복 타입을 만들지 않는다.
+
+Enum이 필요한 경우 명확한 union type 또는 Prisma enum을 사용한다.
+
+---
+
+## 6. Styling
+
+모든 스타일링은 Tailwind CSS를 기본으로 한다.
+
+인라인 style을 사용하지 않는다.
+
+별도의 CSS 파일을 무분별하게 생성하지 않는다.
+
+색상, spacing, typography는 일관된 디자인 시스템을 따른다.
+
+UI는 깔끔하고 현대적인 SaaS 스타일을 지향한다.
+
+과도한 gradient, glassmorphism, 과도한 animation을 사용하지 않는다.
+
+모바일과 데스크톱 모두 대응한다.
+
+---
+
+## 7. UI Components
+
+반복되는 UI는 공통 컴포넌트로 분리한다.
+
+shadcn/ui를 우선적으로 활용한다.
+
+버튼, input, dialog, dropdown, select, tabs 등의
+기본 UI를 직접 구현하지 않는다.
+
+아이콘은 Lucide React를 사용한다.
+
+---
+
+## 8. Survey Builder
+
+설문 Builder는 데이터 기반으로 동작해야 한다.
+
+문항을 하드코딩하지 않는다.
+
+문항 타입에 따라 적절한 컴포넌트를 동적으로 렌더링한다.
+
+지원하는 기본 문항 타입:
+
+- TEXT
+- LONG_TEXT
+- SINGLE_CHOICE
+- MULTIPLE_CHOICE
+- DROPDOWN
+- RATING
+- SCALE
+
+문항에는 다음 정보를 기본적으로 포함한다.
+
+- id
+- title
+- description
+- type
+- required
+- order
+
+선택형 문항은 별도의 options를 가진다.
+
+---
+
+## 9. Rule System
+
+설문은 조건부 문항을 지원한다.
+
+Rule은 다음 구조를 기본으로 한다.
+
+Condition
+→ Action
+
+예:
+
+IF Q1 contains "과자"
+THEN SHOW Q2
+
+IF Q3 < 3
+THEN REQUIRE Q4
+
+조건은 AND / OR 조합을 지원할 수 있도록 설계한다.
+
+Rule 로직은 UI에 직접 하드코딩하지 않는다.
+
+별도의 로직으로 분리하여 테스트 가능하도록 한다.
+
+---
+
+## 10. Form Validation
+
+React Hook Form + Zod를 사용한다.
+
+필수 문항, 선택지, 숫자 범위 등
+설문 타입에 따른 validation을 적용한다.
+
+Client validation과 Server validation을 모두 고려한다.
+
+Client validation만 믿지 않는다.
+
+---
+
+## 11. Database
+
+Prisma ORM을 사용한다.
+
+주요 Entity:
+
+- User
+- Survey
+- Question
+- Option
+- Rule
+- RuleCondition
+- RuleAction
+- Response
+- Answer
+
+데이터 모델을 변경할 경우 기존 데이터에 미치는 영향을 고려한다.
+
+---
+
+## 12. API
+
+API는 일관된 RESTful 구조를 따른다.
+
+가능하면 다음과 같은 형태를 유지한다.
+
+GET
+POST
+PATCH
+DELETE
+
+API route 내부에서 validation을 수행한다.
+
+에러 발생 시 일관된 error response를 반환한다.
+
+---
+
+## 13. Analytics
+
+설문 결과는 문항 타입에 따라 적절한 형태로 분석한다.
+
+SINGLE_CHOICE
+→ 항목별 응답 수 / 비율
+
+MULTIPLE_CHOICE
+→ 항목별 선택 수 / 비율
+
+RATING
+→ 평균 / 분포
+
+SCALE
+→ 평균 / 분포
+
+TEXT / LONG_TEXT
+→ 응답 목록
+
+분석 로직과 UI를 분리한다.
+
+---
+
+## 14. Component Design
+
+큰 컴포넌트를 만들지 않는다.
+
+다음과 같이 책임을 분리한다.
+
+SurveyBuilder
+├── QuestionList
+├── QuestionEditor
+├── QuestionTypeSelector
+├── OptionEditor
+└── RuleEditor
+
+ResponseForm
+├── QuestionRenderer
+├── TextQuestion
+├── ChoiceQuestion
+├── RatingQuestion
+└── ScaleQuestion
+
+AnalyticsDashboard
+├── SummaryCards
+├── QuestionResult
+├── Chart
+└── TextResponseList
+
+---
+
+## 15. Code Quality
+
+코드를 작성하기 전에 기존 프로젝트 구조를 확인한다.
+
+기존 컴포넌트나 utility가 있다면 재사용한다.
+
+동일한 기능을 여러 곳에서 중복 구현하지 않는다.
+
+불필요한 abstraction을 만들지 않는다.
+
+명확한 코드가 지나치게 복잡한 코드보다 우선이다.
+
+---
+
+## 16. Development Process
+
+한 번에 전체 기능을 구현하지 않는다.
+
+다음 순서로 개발한다.
+
+1. 프로젝트 구조
+2. Prisma schema
+3. 기본 Layout
+4. 설문 CRUD
+5. Survey Builder
+6. 문항 타입
+7. Rule System
+8. 응답 페이지
+9. 응답 저장
+10. Analytics Dashboard
+11. UI polish
+12. 테스트 및 오류 수정
+
+각 단계가 완료되면 다음 단계로 넘어간다.
+
+기존 기능을 깨뜨리지 않는 것을 우선한다.
+
+---
+
+## 17. Before Coding
+
+작업을 시작하기 전에 반드시 관련 파일을 먼저 확인한다.
+
+현재 프로젝트의 구조와 기존 구현을 이해한 뒤 수정한다.
+
+파일을 무작정 새로 만들지 않는다.
+
+기존 코드와 충돌하는 구현을 하지 않는다.
+
+---
+
+## 18. After Coding
+
+작업 후 다음을 확인한다.
+
+- TypeScript error
+- ESLint error
+- Build error
+- Runtime error
+- Responsive UI
+- 기존 기능 regression
+
+가능하면 관련 테스트를 실행한다.
+
+---
+
+## 19. Important
+
+사용자가 요청한 범위만 구현한다.
+
+추가 기능을 임의로 구현하지 않는다.
+
+기존 기능을 삭제하거나 변경해야 한다면
+그 이유를 먼저 설명한다.
+
+코드가 동작하는 것뿐만 아니라
+유지보수하기 쉬운 구조를 우선한다.
