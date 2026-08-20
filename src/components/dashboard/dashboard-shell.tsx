@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -22,6 +23,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
         <DashboardHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
         <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
       </div>
+      <Toaster />
     </div>
   );
 }
